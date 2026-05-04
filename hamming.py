@@ -45,8 +45,8 @@ class ImageProcessor:
 
     # Конвертации формата
 
-    def to_jpeg(self):
-        """Конвертирует в JPEG. RGBA/P → RGB с белым фоном."""
+    def to_jpeg(self) -> 'ImageProcessor':
+        """Конвертирует в JPEG. Прозрачный фон заменяется на белый."""
         if self._img.mode == 'P':
             self._img = self._img.convert('RGBA')
 
@@ -61,7 +61,7 @@ class ImageProcessor:
 
         return self
 
-    def to_webp(self):
+    def to_webp(self) -> 'ImageProcessor':
         """Конвертирует в WebP. Сохраняет прозрачность для RGBA."""
         if self._img.mode in ('LA', 'P'):
             self._img = self._img.convert('RGBA')
@@ -101,16 +101,25 @@ class ImageProcessor:
 
         return self
 
-    def watermark(self, watermark_source, position=(0, 0), opacity=1.0):
+    def watermark(
+        self,
+        watermark_source: Union[str, Path, io.BytesIO, File],
+        *,
+        position: Optional[tuple[int, int]] = None,
+        opacity: float = 1.0,
+    ) -> 'ImageProcessor':
         """
         Наложение watermark на изображение.
 
-        :param watermark_source: путь | file-like | PIL.Image.
-        :param position: (x, y).
-        :param opacity: 0.0 - 1.0.
+        :param watermark_source: Источник watermark (путь/файл).
+        :param position: Позиция установки watermark (x, y).
+        :param opacity: Непрозрачность 0.0 - 1.0.
         """
         with Image.open(watermark_source) as tmp:
             watermark = tmp.copy()
+
+        if position is None:
+            position = (0, 0)
 
         if opacity < 1.0:
             alpha = watermark.split()[3]
@@ -175,6 +184,7 @@ class ImageProcessor:
 
     def images_from_pdf(
         self,
+        *,
         file_format: str = ImageExtension.JPEG,
         resolution: int = 150,
         pages_pattern: str = '*',
@@ -238,12 +248,8 @@ class ImageProcessor:
         return pages_numbers
 
 
-ImageProcessor('sample.jpg').to_webp().save('zxc1.webp')
-ImageProcessor('sample.png').to_webp().save('zxc2.webp')
-ImageProcessor('sample2.png').to_webp().save('zxc3.webp')
-ImageProcessor('sample.webp').to_webp().save('zxc4.webp')
-
-ImageProcessor('sample.jpg').to_jpeg().save('zxc1.jpg')
-ImageProcessor('sample.png').to_jpeg().save('zxc2.jpg')
-ImageProcessor('sample2.png').to_jpeg().save('zxc3.jpg')
-ImageProcessor('sample.webp').to_jpeg().save('zxc4.jpg')
+if __name__ == '__main__':
+    cfs = ImageProcessor('sample.pdf').images_from_pdf()
+    for idx, cf in enumerate(cfs):
+        with open(f'zxc_{idx}.jpg', 'wb') as f:
+            f.write(cf.read())
