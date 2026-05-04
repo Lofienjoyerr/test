@@ -18,6 +18,11 @@ class ImageExtension:
 
 
 class ImageProcessor:
+    """
+    Интерфейс для взаимодействия с изображениями.
+
+    Также может обрабатывать pdf.
+    """
 
     DEFAULT_QUALITY_BY_BIGGEST_SIDE = {
         500: 90,
@@ -35,7 +40,8 @@ class ImageProcessor:
             with Image.open(source) as img:
                 self._format = img.format
                 img = ImageOps.exif_transpose(img)
-                self._img = img.copy()
+                self._img = img
+                self._img.load()
 
     # Конвертации формата
 
@@ -146,8 +152,12 @@ class ImageProcessor:
         if quality is None:
             quality = self._get_quality()
 
+        extra_kwargs = {}
+        if self._format == 'JPEG':
+            extra_kwargs['optimize'] = True
+
         buf = io.BytesIO()
-        self._img.save(buf, format=self._format, quality=quality, optimize=True)
+        self._img.save(buf, format=self._format, quality=quality, **extra_kwargs)
         buf.seek(0)
 
         return ContentFile(buf.read())
@@ -157,7 +167,11 @@ class ImageProcessor:
         if quality is None:
             quality = self._get_quality()
 
-        self._img.save(path, format=self._format, quality=quality)
+        extra_kwargs = {}
+        if self._format == 'JPEG':
+            extra_kwargs['optimize'] = True
+
+        self._img.save(path, format=self._format, quality=quality, **extra_kwargs)
 
     def images_from_pdf(
         self,
@@ -228,3 +242,8 @@ ImageProcessor('sample.jpg').to_webp().save('zxc1.webp')
 ImageProcessor('sample.png').to_webp().save('zxc2.webp')
 ImageProcessor('sample2.png').to_webp().save('zxc3.webp')
 ImageProcessor('sample.webp').to_webp().save('zxc4.webp')
+
+ImageProcessor('sample.jpg').to_jpeg().save('zxc1.jpg')
+ImageProcessor('sample.png').to_jpeg().save('zxc2.jpg')
+ImageProcessor('sample2.png').to_jpeg().save('zxc3.jpg')
+ImageProcessor('sample.webp').to_jpeg().save('zxc4.jpg')
