@@ -241,15 +241,8 @@ class ImageProcessor:
             if '-' in token:
                 left_border, right_border = token.split('-')
                 for page_index in range(int(left_border), int(right_border) + 1):
-                    pages_numbers.append(int(page_index))
+                    pages_numbers.append(int(page_index) - 1)
             else:
-                pages_numbers.append(int(token))
+                pages_numbers.append(int(token) - 1)
 
         return pages_numbers
-
-
-if __name__ == '__main__':
-    cfs = ImageProcessor('sample.pdf').images_from_pdf()
-    for idx, cf in enumerate(cfs):
-        with open(f'zxc_{idx}.jpg', 'wb') as f:
-            f.write(cf.read())
